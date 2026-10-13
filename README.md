@@ -17,6 +17,7 @@ Add your team (name + members) on an empty `- ` line below:
 - The Matrix Confusers : Thomas, Isabella 
 - Maximum Likelihood of passing: Peter Sparks, Pail Boissot
 - Code & Cognition: Emma Boydens, Jens Vorsselmans, Marie Pittevils
+- Humans Vs Code: Eugeniu, Gergely, Andrei
 
 Don't forget to pick a funny name that is a pun on the contents of this class! Some inspirations from the past:
 
