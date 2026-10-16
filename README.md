@@ -9,7 +9,7 @@ This is a template repo for the field course "Data Science and Machine Learning"
 
 Add your team (name + members) on an empty `- ` line below:
 
-- No Overfitting, Just Overthinking: Greta Simeliunaite and Csenge Soter
+- No Overfitting, Just Overthinking: Greta Simeliunaite, Csenge Soter and Lina Möller
 - R.-Bytes-Loss(): Deim, Tartarotti, Weber
 - Data Queens: Tim Brecht, Panna Bodnar, Chiara D'Amico
 - Git Happens: Sophia Leah Ravner, Alesia Kokonaj
