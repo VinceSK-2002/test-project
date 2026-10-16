@@ -1,6 +1,5 @@
 ---
 title: "Databases and APIs"
-author: <sdgsad
 execute:
   echo: true
   eval: false
@@ -88,7 +87,30 @@ gdp_data <- get_eurostat(
 head(gdp_data)
 ```
 
-To keep data up to date automatically, put the download, processing and upload steps into a script and schedule it (cron job on Unix, Task Scheduler on Windows).
+To keep data up to date automatically, put the download, processing and upload steps into a script and schedule it (cron job on Unix, Task Scheduler on Windows). These commands go into the terminal, not into R. On Unix, open your crontab and add a line that runs the script every day at 6:00:
+
+```{sh}
+crontab -e
+```
+
+```{sh}
+┌──────── minute        (0–59)
+│ ┌────── hour          (0–23)
+│ │ ┌──── day of month  (1–31)
+│ │ │ ┌── month         (1–12)
+│ │ │ │ ┌ day of week   (0–7, 0 and 7 = Sunday)
+│ │ │ │ │
+0 6 * * * Rscript /home/schmo/Github/test-project/update_data.R
+```
+
+On Windows, the same schedule is set up in `cmd` with `schtasks`:
+
+```{sh}
+schtasks /create /tn "update_data" /sc daily /st 06:00 ^
+  /tr "Rscript D:\Users\schmo\Github\test-project\update_data.R"
+```
+
+Both assume that `Rscript` is on your PATH. If it is not, use the full path instead, e.g. `"C:\Program Files\R\R-4.5.1\bin\Rscript.exe"`. Adjust the paths to wherever your script lives.
 
 ## GET from the Browser — Eurostat in OJS
 
@@ -166,15 +188,22 @@ vl.markLine({ point: true })
   .render({ renderer: "svg" })
 ```
 
-## POST from R — OpenRouter
+## POST from R — Ollama
 
-A POST request sends instructions to the server in the body, usually as JSON, and can return data as well. As an example we let GPT-4.1 nano classify the sentiment of movie reviews. We reach it through [OpenRouter](https://openrouter.ai/docs/quickstart), which offers models from many providers (OpenAI, Anthropic, Google, Meta, ...) behind one API in the same format as the OpenAI API, so switching models only means changing the `model` string. You need your own OpenRouter API key.
+A POST request sends instructions to the server in the body, usually as JSON, and can return data as well. As an example we let a language model classify the sentiment of movie reviews. Instead of paying for a model in the cloud we host one ourselves: [Ollama](https://docs.ollama.com) runs language models on your own device and makes them available through an API. After installing it, download a model in the terminal (not in R):
 
-```{r}
-key <- read_csv("keys/key_openrouter.txt")
+```{sh}
+ollama pull llama3.2
+ollama list
 ```
 
-We take the first five reviews and write the instructions for the model (the "system role"):
+Ollama now listens on `http://localhost:11434` (opening that address in the browser should say "Ollama is running"). If it does not, start the server yourself with `ollama serve`. To run it on a different address or port, set `OLLAMA_HOST` before starting the server, and change the URL in the R code below to match:
+
+```{sh}
+export OLLAMA_HOST=localhost:11434
+```
+
+We take the first 20 reviews and write the instructions for the model (the "system role"):
 
 ```{r}
 prompts <- read_parquet("data/imdb.parquet") %>%
@@ -194,51 +223,7 @@ answers <- data.frame(
   )
 ```
 
-Then we loop through the reviews and send one request per review. The key goes into the header, the model, the messages and the temperature into the body. `temperature = 0` makes the answers as deterministic as possible:
-
-```{r}
-for (i in 1:nrow(prompts)) {
-  response_raw <- POST(
-    url = "https://openrouter.ai/api/v1/chat/completions",
-    add_headers(Authorization = paste("Bearer", key)),
-    encode = "json",
-    body = list(
-      model = "openai/gpt-4.1-nano",
-      messages = list(
-        list(role = "system", content = system_role),
-        list(role = "user", content = prompts$review[i])
-        ),
-      temperature = 0
-    )
-  )
-  answers[i, 1] <- prompts$review[i]
-  answers[i, 2] <- content(response_raw)$choices[[1]]$message$content
-  progress <- round(i/nrow(prompts)*100)
-  if (i == 1) {cat(" Progress:\n")}
-  if (i%%10 == 0) {cat(glue(progress, "% \n"))}
-}
-
-answers
-```
-
-If something goes wrong, check `status_code(response_raw)` and `content(response_raw)`: a 401 means the key is wrong, a 429 that you sent too many requests or have no credit left.
-
-## POST from R — Ollama
-
-We can also host a service ourselves and talk to it through its API. [Ollama](https://docs.ollama.com) runs language models on your own device. After installing it, download a model in the terminal (not in R):
-
-```{sh}
-ollama pull llama3.2
-ollama list
-```
-
-Ollama now listens on `http://localhost:11434` (opening that address in the browser should say "Ollama is running"). If it does not, start the server yourself with `ollama serve`. To run it on a different address or port, set `OLLAMA_HOST` before starting the server, and change the URL in the R code below to match:
-
-```{sh}
-export OLLAMA_HOST=localhost:11434
-```
-
-The loop is the same as before, only the URL and the body change, and no key is needed because the server runs on your machine:
+Then we loop through the reviews and send one request per review. The model, the prompt and the temperature go into the body, and `temperature = 0` makes the answers as deterministic as possible. No key is needed because the server runs on your machine:
 
 ```{r}
 for (i in 1:nrow(prompts)) {
@@ -267,6 +252,8 @@ for (i in 1:nrow(prompts)) {
 
 answers
 ```
+
+If something goes wrong, check `status_code(ollama_response)` and `content(ollama_response)`: a connection error means Ollama is not running, a 404 that the model has not been pulled yet.
 
 # Databases and Data Wrangling
 
