@@ -14,7 +14,7 @@ Add your team (name + members) on an empty `- ` line below:
 - Git Happens: Sophia Leah Ravner, Alesia Kokonaj, Jennifer Emilio
 - The Biased Priors: Ryan McCann, Lorenz Rausch, Lorenz Bodner
 - The Matrix Confusers : Thomas, Isabella, Leo
-- Maximum Likelihood of passing: Peter Sparks, Pail Boissot
+- Maximum Likelihood of passing: Peter Sparks, Paul Boissot, Anita Mor
 - Code & Cognition: Emma Boydens, Jens Vorsselmans, Marie Pittevils
 - Humans Vs Code: Eugeniu, Gergely, Andrei
 
